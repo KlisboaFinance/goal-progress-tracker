@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kevin's Simple Goal Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            background: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .categories {
+            background: #667eea;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .category-tab {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .category-tab.active {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .category-tab .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            padding: 15px;
+            background: #f5f5f5;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+
+        .content {
+            padding: 20px;
+        }
+
+        .add-task {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-row input, .form-row select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .form-row textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .tasks {
+            background: white;
+        }
+
+        .task {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .task:hover {
+            background: #f8f9fa;
+        }
+
+        .task.urgent {
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .task-notes {
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .subtask {
+            margin-left: 20px;
+            padding: 5px 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .status-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .status-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .priority-high { background: #ffebee; color: #c62828; }
+        .priority-medium { background: #fff8e1; color: #ef6c00; }
+        .priority-low { background: #e8f5e8; color: #2e7d32; }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .task {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .task-actions {
+                align-self: stretch;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏆 Kevin's Goal Tracker</h1>
+            <p>Simple, effective task management</p>
+        </div>
+
+        <!-- Categories -->
+        <div class="categories">
+            <div id="categoryTabs"></div>
+            <div style="margin-top: 10px;">
+                <input type="text" id="newCategory" placeholder="New category name" style="padding: 5px 10px; border: none; border-radius: 15px; margin-right: 10px;">
+                <button onclick="addCategory()" style="padding: 5px 15px; background: rgba(255,255,255,0.3); border: none; border-radius: 15px; color: white; cursor: pointer;">Add</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="toggleCompletedTasks()" id="toggleBtn">Show Completed</button>
+            <button class="btn btn-primary" onclick="openGoalModal()">Set Goal</button>
+            <button class="btn btn-danger" onclick="clearGoal()" id="clearGoalBtn" style="display: none;">Clear Goal</button>
+            <button class="btn btn-secondary" onclick="exportData()">Export</button>
+            <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Stats -->
+            <div class="stats" id="stats"></div>
+
+            <!-- Add Task Form -->
+            <div class="add-task">
+                <h3>Add New Task</h3>
+                <div class="form-row">
+                    <input type="text" id="taskName" placeholder="Task name" maxlength="200">
+                    <select id="taskPriority">
+                        <option value="Low">Low Priority</option>
+                        <option value="Medium" selected>Medium Priority</option>
+                        <option value="High">High Priority</option>
+                    </select>
+                    <select id="taskStatus">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Dropped">Dropped</option>
+                    </select>
+                    <input type="date" id="taskDueDate">
+                    <button class="btn btn-primary" onclick="addTask()">Add</button>
+                </div>
+                <div class="form-row">
+                    <textarea id="taskNotes" placeholder="Notes (optional)" maxlength="500"></textarea>
+                </div>
+            </div>
+
+            <!-- Task List -->
+            <div class="tasks">
+                <div id="taskList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Modal -->
+    <div id="goalModal" class="modal">
+        <div class="modal-content">
+            <h3>🎯 Set SMART Goal</h3>
+            <div style="margin-bottom: 15px;">
+                <label>Goal Title:</label>
+                <input type="text" id="goalTitle" style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Target Date:</label>
+                <input type="date" id="goalTarget" style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Weekly Task Target:</label>
+                <input type="number" id="goalWeekly" value="5" min="1" style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label>Description:</label>
+                <textarea id="goalDesc" style="width: 100%; padding: 8px; margin-top: 5px; height: 80px;"></textarea>
+            </div>
+            <div style="text-align: right;">
+                <button class="btn btn-secondary" onclick="closeGoalModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveGoal()">Save Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>✏️ Edit Task</h3>
+            <div style="margin-bottom: 15px;">
+                <label>Task Name:</label>
+                <input type="text" id="editName" style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label>Priority:</label>
+                    <select id="editPriority" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Status:</label>
+                    <select id="editStatus" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Dropped">Dropped</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Due Date:</label>
+                    <input type="date" id="editDueDate" style="width: 100%; padding: 8px; margin-top: 5px;">
+                </div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label>Notes:</label>
+                <textarea id="editNotes" style="width: 100%; padding: 8px; margin-top: 5px; height: 100px;"></textarea>
+            </div>
+            <div style="text-align: right;">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple global state
+        let app = {
+            categories: ['Personal', 'Career', 'Business', 'Health'],
+            activeCategory: 'Personal',
+            tasks: [],
+            smartGoal: null,
+            showCompleted: false,
+            nextId: 1,
+            editingId: null
+        };
+
+        // Storage
+        function save() {
+            localStorage.setItem('goalTracker', JSON.stringify(app));
+        }
+
+        function load() {
+            const saved = localStorage.getItem('goalTracker');
+            if (saved) {
+                app = {...app, ...JSON.parse(saved)};
+                // Update next ID
+                app.tasks.forEach(task => {
+                    if (task.id >= app.nextId) app.nextId = task.id + 1;
+                    if (task.subtasks) {
+                        task.subtasks.forEach(sub => {
+                            if (sub.id >= app.nextId) app.nextId = sub.id + 1;
+                        });
+                    }
+                });
+            }
+        }
+
+        // Categories
+        function renderCategories() {
+            const container = document.getElementById('categoryTabs');
+            container.innerHTML = app.categories.map((cat, i) => {
+                const progress = getCategoryProgress(cat);
+                const isActive = cat === app.activeCategory;
+                return `
+                    <div style="position: relative; display: inline-block; margin: 5px;">
+                        <button class="category-tab ${isActive ? 'active' : ''}" 
+                                onclick="selectCategory(${i})">
+                            ${cat}
+                            <span class="badge">${progress}%</span>
+                        </button>
+                        ${app.categories.length > 1 ? `
+                            <button onclick="deleteCategory(${i})" 
+                                    style="position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; 
+                                           border-radius: 50%; background: #dc3545; color: white; border: none; 
+                                           font-size: 0.7rem; cursor: pointer; line-height: 1;" 
+                                    title="Delete category">×</button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectCategory(index) {
+            app.activeCategory = app.categories[index];
+            save();
+            render();
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategory');
+            const name = input.value.trim();
+            
+            if (!name) return;
+            if (app.categories.includes(name)) {
+                alert('Category already exists');
+                return;
+            }
+            
+            app.categories.push(name);
+            app.activeCategory = name;
+            input.value = '';
+            save();
+            render();
+        }
+
+        function deleteCategory(index) {
+            const categoryToDelete = app.categories[index];
+            
+            if (app.categories.length <= 1) {
+                alert('Cannot delete the last category');
+                return;
+            }
+            
+            const tasksInCategory = app.tasks.filter(t => t.category === categoryToDelete).length;
+            let message = `Delete category "${categoryToDelete}"?`;
+            
+            if (tasksInCategory > 0) {
+                const newCategory = app.categories.find(c => c !== categoryToDelete);
+                message += `\n\nThis will move ${tasksInCategory} task(s) to "${newCategory}".`;
+            }
+            
+            if (confirm(message)) {
+                // Move tasks to first remaining category
+                const newCategory = app.categories.find(c => c !== categoryToDelete);
+                app.tasks.forEach(task => {
+                    if (task.category === categoryToDelete) {
+                        task.category = newCategory;
+                    }
+                });
+                
+                // Remove category
+                app.categories.splice(index, 1);
+                
+                // Update active category if needed
+                if (app.activeCategory === categoryToDelete) {
+                    app.activeCategory = app.categories[0];
+                }
+                
+                save();
+                render();
+                alert(`Category "${categoryToDelete}" deleted!`);
+            }
+        }
+
+        function getCategoryProgress(category) {
+            const tasks = app.tasks.filter(t => t.category === category);
+            if (tasks.length === 0) return 0;
+            const completed = tasks.filter(t => t.status === 'Completed').length;
+            return Math.round((completed / tasks.length) * 100);
+        }
+
+        // Tasks
+        function addTask() {
+            const name = document.getElementById('taskName').value.trim();
+            if (!name) {
+                alert('Please enter a task name');
+                return;
+            }
+
+            const task = {
+                id: app.nextId++,
+                name: name,
+                category: app.activeCategory,
+                priority: document.getElementById('taskPriority').value,
+                status: document.getElementById('taskStatus').value,
+                dueDate: document.getElementById('taskDueDate').value || null,
+                notes: document.getElementById('taskNotes').value.trim() || null,
+                dateAdded: new Date().toLocaleDateString(),
+                subtasks: []
+            };
+
+            app.tasks.push(task);
+            clearForm();
+            save();
+            render();
+        }
+
+        function editTask(id) {
+            const task = findTask(id);
+            if (!task) return;
+
+            app.editingId = id;
+            document.getElementById('editName').value = task.name;
+            document.getElementById('editPriority').value = task.priority;
+            document.getElementById('editStatus').value = task.status;
+            document.getElementById('editDueDate').value = task.dueDate || '';
+            document.getElementById('editNotes').value = task.notes || '';
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function saveEdit() {
+            const task = findTask(app.editingId);
+            if (!task) return;
+
+            const name = document.getElementById('editName').value.trim();
+            if (!name) {
+                alert('Please enter a task name');
+                return;
+            }
+
+            task.name = name;
+            task.priority = document.getElementById('editPriority').value;
+            task.status = document.getElementById('editStatus').value;
+            task.dueDate = document.getElementById('editDueDate').value || null;
+            task.notes = document.getElementById('editNotes').value.trim() || null;
+
+            closeEditModal();
+            save();
+            render();
+        }
+
+        function deleteTask(id) {
+            const task = findTask(id);
+            if (!task || !confirm(`Delete "${task.name}"?`)) return;
+            
+            app.tasks = app.tasks.filter(t => t.id !== id);
+            save();
+            render();
+        }
+
+        function toggleStatus(id) {
+            const task = findTask(id);
+            if (!task) return;
+
+            const statuses = ['Not Started', 'In Progress', 'Completed'];
+            const currentIndex = statuses.indexOf(task.status);
+            task.status = statuses[(currentIndex + 1) % statuses.length];
+            
+            save();
+            render();
+        }
+
+        function addSubtask(parentId) {
+            const name = prompt('Subtask name:');
+            if (!name) return;
+
+            const parent = findTask(parentId);
+            if (!parent) return;
+
+            parent.subtasks.push({
+                id: app.nextId++,
+                name: name.trim(),
+                status: 'Not Started'
+            });
+
+            save();
+            render();
+        }
+
+        function deleteSubtask(parentId, subtaskId) {
+            const parent = findTask(parentId);
+            if (!parent) return;
+
+            const subtask = parent.subtasks.find(s => s.id === subtaskId);
+            if (!subtask || !confirm(`Delete "${subtask.name}"?`)) return;
+
+            parent.subtasks = parent.subtasks.filter(s => s.id !== subtaskId);
+            save();
+            render();
+        }
+
+        // SMART Goals
+        function openGoalModal() {
+            if (app.smartGoal) {
+                document.getElementById('goalTitle').value = app.smartGoal.title;
+                document.getElementById('goalTarget').value = app.smartGoal.target;
+                document.getElementById('goalWeekly').value = app.smartGoal.weeklyTarget;
+                document.getElementById('goalDesc').value = app.smartGoal.description;
+            }
+            document.getElementById('goalModal').style.display = 'block';
+        }
+
+        function closeGoalModal() {
+            document.getElementById('goalModal').style.display = 'none';
+        }
+
+        function saveGoal() {
+            const title = document.getElementById('goalTitle').value.trim();
+            const target = document.getElementById('goalTarget').value;
+            const weeklyTarget = parseInt(document.getElementById('goalWeekly').value) || 5;
+            const description = document.getElementById('goalDesc').value.trim();
+
+            if (!title || !target) {
+                alert('Please fill in title and target date');
+                return;
+            }
+
+            app.smartGoal = {
+                title,
+                target,
+                weeklyTarget,
+                description,
+                startDate: app.smartGoal?.startDate || new Date().toISOString().split('T')[0]
+            };
+
+            closeGoalModal();
+            save();
+            render();
+        }
+
+        // Utilities
+        function findTask(id) {
+            for (let task of app.tasks) {
+                if (task.id === id) return task;
+                if (task.subtasks) {
+                    for (let sub of task.subtasks) {
+                        if (sub.id === id) return sub;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getUrgency(task) {
+            if (!task.dueDate || task.status === 'Completed') return 'normal';
+            
+            const today = new Date();
+            const due = new Date(task.dueDate);
+            const days = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+
+            return days < 0 ? 'urgent' : 'normal';
+        }
+
+        function clearForm() {
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskPriority').value = 'Medium';
+            document.getElementById('taskStatus').value = 'Not Started';
+            document.getElementById('taskDueDate').value = '';
+            document.getElementById('taskNotes').value = '';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            app.editingId = null;
+        }
+
+        function toggleCompletedTasks() {
+            app.showCompleted = !app.showCompleted;
+            const btn = document.getElementById('toggleBtn');
+            if (btn) {
+                btn.textContent = app.showCompleted ? 'Hide Completed' : 'Show Completed';
+            }
+            render();
+        }
+
+        // Rendering
+        function render() {
+            renderCategories();
+            renderStats();
+            renderGoals();
+            renderTasks();
+            updateGoalButton();
+        }
+
+        function renderGoals() {
+            const section = document.getElementById('smartGoalsSection');
+            console.log('renderGoals called, smartGoal:', app.smartGoal, 'section:', section);
+            
+            if (!app.smartGoal) {
+                if (section) section.style.display = 'none';
+                return;
+            }
+
+            // Force section to show
+            if (section) {
+                section.style.display = 'block';
+                console.log('SMART goals section made visible');
+            }
+            
+            try {
+                const today = new Date();
+                const start = new Date(app.smartGoal.startDate);
+                const target = new Date(app.smartGoal.target);
+                
+                const daysPassed = Math.max(0, Math.ceil((today - start) / (1000 * 60 * 60 * 24)));
+                const daysLeft = Math.max(0, Math.ceil((target - today) / (1000 * 60 * 60 * 24)));
+                const weeksPassed = Math.max(1, Math.ceil(daysPassed / 7));
+                
+                const expectedTasks = weeksPassed * (app.smartGoal.weeklyTarget || 5);
+                const actualCompleted = app.tasks.filter(t => t.status === 'Completed').length;
+                const progressPercent = expectedTasks > 0 ? Math.round((actualCompleted / expectedTasks) * 100) : 0;
+
+                const goalDesc = document.getElementById('goalDescription');
+                const goalMetrics = document.getElementById('goalMetrics');
+                
+                if (goalDesc) {
+                    goalDesc.textContent = `${app.smartGoal.title} - ${app.smartGoal.description || 'Target: ' + new Date(app.smartGoal.target).toLocaleDateString()}`;
+                    console.log('Updated goal description');
+                }
+                
+                if (goalMetrics) {
+                    goalMetrics.innerHTML = `
+                        <div class="goal-metric">
+                            <h4>${actualCompleted}</h4>
+                            <p>Completed</p>
+                        </div>
+                        <div class="goal-metric">
+                            <h4>${expectedTasks}</h4>
+                            <p>Expected</p>
+                        </div>
+                        <div class="goal-metric">
+                            <h4 style="color: ${progressPercent >= 100 ? '#4CAF50' : progressPercent >= 80 ? '#ff9800' : '#dc3545'}">${progressPercent}%</h4>
+                            <p>On Track</p>
+                        </div>
+                        <div class="goal-metric">
+                            <h4>${daysLeft > 0 ? daysLeft : 'Overdue!'}</h4>
+                            <p>Days Left</p>
+                        </div>
+                    `;
+                    console.log('Updated goal metrics');
+                }
+            } catch (error) {
+                console.error('Error rendering goals:', error);
+                const goalDesc = document.getElementById('goalDescription');
+                if (goalDesc) goalDesc.textContent = 'Error loading goal data - check console';
+            }
+        }
+
+        function updateGoalButton() {
+            const clearBtn = document.getElementById('clearGoalBtn');
+            if (clearBtn) {
+                clearBtn.style.display = app.smartGoal ? 'inline-block' : 'none';
+            }
+        }
+
+        function renderStats() {
+            const statsEl = document.getElementById('stats');
+            if (!statsEl) return;
+            
+            const categoryTasks = app.tasks.filter(t => t.category === app.activeCategory);
+            const active = categoryTasks.filter(t => t.status !== 'Completed' && t.status !== 'Dropped').length;
+            const completed = categoryTasks.filter(t => t.status === 'Completed').length;
+            const urgent = categoryTasks.filter(t => getUrgency(t) === 'urgent').length;
+            const total = categoryTasks.length;
+
+            statsEl.innerHTML = `
+                <div class="stat">
+                    <div class="stat-number">${active}</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">${completed}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" style="color: ${urgent > 0 ? '#dc3545' : '#4CAF50'}">${urgent}</div>
+                    <div class="stat-label">Urgent</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">${total > 0 ? Math.round((completed/total)*100) : 0}%</div>
+                    <div class="stat-label">Complete</div>
+                </div>
+            `;
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('taskList');
+            if (!container) return;
+            
+            const categoryTasks = app.tasks.filter(t => t.category === app.activeCategory);
+            let displayTasks = app.showCompleted ? categoryTasks : categoryTasks.filter(t => t.status !== 'Completed');
+            
+            // Sort by urgency then priority
+            displayTasks.sort((a, b) => {
+                const urgencyA = getUrgency(a) === 'urgent' ? 0 : 1;
+                const urgencyB = getUrgency(b) === 'urgent' ? 0 : 1;
+                if (urgencyA !== urgencyB) return urgencyA - urgencyB;
+                
+                const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+                return (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1);
+            });
+
+            if (displayTasks.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        No tasks in ${app.activeCategory}. Add one above!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = displayTasks.map(task => {
+                const urgent = getUrgency(task) === 'urgent';
+                const statusIcon = task.status === 'Completed' ? '✅' : 
+                                 task.status === 'In Progress' ? '🔄' : 
+                                 task.status === 'Dropped' ? '❌' : '⭕';
+
+                const subtasksHtml = (task.subtasks && task.subtasks.length > 0) ? 
+                    task.subtasks.map(sub => `
+                        <div class="subtask">
+                            <span onclick="toggleStatus(${sub.id})" style="cursor: pointer;">
+                                ${sub.status === 'Completed' ? '✅' : '⭕'} ${sub.name || 'Unnamed subtask'}
+                            </span>
+                            <button class="btn btn-danger" style="padding: 2px 6px; font-size: 0.7rem; margin-left: 10px;" 
+                                    onclick="deleteSubtask(${task.id}, ${sub.id})">Delete</button>
+                        </div>
+                    `).join('') : '';
+
+                return `
+                    <div class="task ${urgent ? 'urgent' : ''}">
+                        <button class="status-btn" onclick="toggleStatus(${task.id})" title="Click to cycle status">${statusIcon}</button>
+                        <div class="task-info">
+                            <div class="task-name">${task.name || 'Unnamed task'}</div>
+                            ${task.notes ? `<div class="task-notes">${task.notes}</div>` : ''}
+                            ${task.dueDate ? `<div style="font-size: 0.8rem; color: #999;">Due: ${new Date(task.dueDate).toLocaleDateString()}</div>` : ''}
+                            ${subtasksHtml}
+                        </div>
+                        <div class="priority-badge priority-${(task.priority || 'medium').toLowerCase()}">${task.priority || 'Medium'}</div>
+                        <div class="task-actions">
+                            <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="addSubtask(${task.id})">+Sub</button>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="editTask(${task.id})">Edit</button>
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="deleteTask(${task.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Data Management
+        function exportData() {
+            const dataStr = JSON.stringify(app, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `goals-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm('Import data? This will replace current data.')) {
+                        app = {...app, ...imported};
+                        save();
+                        render();
+                        alert('Data imported!');
+                    }
+                } catch (error) {
+                    alert('Invalid file');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Event Handlers
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+            // Initialize
+            load();
+            render();
+            console.log('Goal Tracker initialized successfully');
+        
+    </script>
+</body>
+</html>
